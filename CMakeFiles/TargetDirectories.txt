@@ -1,0 +1,3 @@
+/home/andrez-dev/Spring Semester 2026/MCSCI-272/Composition_Lab/CMakeFiles/Objects_and_Classes_1.dir
+/home/andrez-dev/Spring Semester 2026/MCSCI-272/Composition_Lab/CMakeFiles/edit_cache.dir
+/home/andrez-dev/Spring Semester 2026/MCSCI-272/Composition_Lab/CMakeFiles/rebuild_cache.dir
