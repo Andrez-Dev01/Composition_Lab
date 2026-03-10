@@ -10,126 +10,8 @@
 #include <vector>
 #include <limits>
 #include <memory>
+#include <cstring>
 #include "main.h"
-
-// Default constructor initializing with default values
-BankAccount::BankAccount() {
-    accountNumber = "";
-    accountHolderName = new char[1];
-    accountHolderName[0] = '\0';
-    balance = 0.0;
-}
-
-// Parameterized constructor initializing with user-provided values
-BankAccount::BankAccount(std::string accountNumber, std::string accountHolderName, double balance) {
-    this->accountNumber = accountNumber;
-    this->accountHolderName = new char[accountHolderName.length() + 1]; 
-    strcpy(this->accountHolderName, accountHolderName.c_str());
-    this->balance = balance;
-}
-
-// Copy constructor (Rule of Three) - creates a deep copy of the object
-BankAccount::BankAccount(const BankAccount& other) {
-    accountNumber = other.accountNumber;
-    balance = other.balance;
-    if (other.accountHolderName) {
-        // Deep copy of the dynamic character array
-        accountHolderName = new char[strlen(other.accountHolderName) + 1];
-        strcpy(accountHolderName, other.accountHolderName);
-    } else {
-        accountHolderName = new char[1];
-        accountHolderName[0] = '\0';
-    }
-}
-
-// Assignment operator (Rule of Three) - handles self-assignment and performs deep copy
-BankAccount& BankAccount::operator=(const BankAccount& other) {
-    if (this != &other) { // Avoid self-assignment
-        accountNumber = other.accountNumber;
-        balance = other.balance;
-
-        // Clean up existing memory before allocating new memory
-        delete[] accountHolderName;
-        if (other.accountHolderName) {
-            accountHolderName = new char[strlen(other.accountHolderName) + 1];
-            strcpy(accountHolderName, other.accountHolderName);
-        } else {
-            accountHolderName = new char[1];
-            accountHolderName[0] = '\0';
-        }
-    }
-    return *this;
-}
-
-// Destructor (Rule of Three) - releases dynamically allocated memory
-BankAccount::~BankAccount() {
-    delete[] accountHolderName;
-}
-
-void BankAccount::SetAccountHolderName(std::string accountHolderName) {
-    delete[] this->accountHolderName;
-    this->accountHolderName = new char[accountHolderName.length() + 1];
-    strcpy(this->accountHolderName, accountHolderName.c_str());
-}
-
-std::string BankAccount::GetAccountHolderName() const {
-    return std::string(accountHolderName);
-}
-
-// Overload += operator for depositing money
-BankAccount& BankAccount::operator+=(double amount) {
-    if (amount > 0) {
-        balance += amount;  
-    }
-    return *this;  
-}
-
-// Overload -= operator for withdrawing money
-BankAccount& BankAccount::operator-=(double amount) {
-    if (amount > 0 && amount <= balance) {
-        balance -= amount;  
-    }
-    
-    return *this;  
-}
-
-// Overload == operator to compare accounts by account number
-bool BankAccount::operator==(const BankAccount& other) const {
-    return accountNumber == other.accountNumber;  
-}
-
-// Overload < operator to compare accounts by balance
-bool BankAccount::operator<(const BankAccount& other) const {
-    return balance < other.balance;  
-}
-
-// Overload > operator to compare accounts by balance
-bool BankAccount::operator>(const BankAccount& other) const {
-    return balance > other.balance;  
-}
-
-// Displays account information to the console
-void BankAccount::printAccount(const BankAccount& account) {
-    std::cout << "Account Number: " << account.accountNumber << std::endl;
-    std::cout << "Account Holder: " << account.accountHolderName << std::endl;
-    std::cout << "Balance: $" << account.balance << std::endl;
-}
-
-// Static method to create a BankAccount object from user input
-BankAccount BankAccount::createAccountFromInput() {
-    std::string accountNumber, accountHolderName;
-    double balance;
-
-    std::cout << "Enter account number: ";
-    std::cin >> accountNumber;
-    std::cin.ignore(); // Consume newline character
-    std::cout << "Enter account holder name: ";
-    std::getline(std::cin, accountHolderName);
-    std::cout << "Enter initial balance: ";
-    std::cin >> balance;
-
-    return BankAccount(accountNumber, accountHolderName, balance);  
-}
 
 // Helper function to find an account index by its account number
 int findAccountIndex(const std::vector<std::unique_ptr<BankAccount>>& accounts, const std::string& accountNumber) {
@@ -164,7 +46,8 @@ int main() {
         std::cout << "8. Update account holder name" << std::endl;
         std::cout << "9. Calculate interest (Savings account)" << std::endl;
         std::cout << "10. Demo polymorphic withdraw" << std::endl;
-        std::cout << "11. Exit" << std::endl;
+        std::cout << "11. Print transaction history" << std::endl;
+        std::cout << "12. Exit" << std::endl;
         std::cout << "--------------------------------" << std::endl;
         std::cout << "Enter your choice: ";
         std::cin >> menuChoice;
@@ -221,11 +104,15 @@ int main() {
             }
             case 3: {
                 std::cout << "--------------------------------" << std::endl;
-                std::cout << "Creating base account using static function..." << std::endl;
-                BankAccount newAccount = BankAccount::createAccountFromInput();
-                accounts.push_back(std::make_unique<BankAccount>(newAccount));
-                std::cout << "\nAccount created successfully!" << std::endl;
-                BankAccount::printAccount(*accounts.back());
+                std::cout << "Creating account using static function..." << std::endl;
+                std::unique_ptr<BankAccount> newAccount = BankAccount::createAccountFromInput();
+                if (newAccount) {
+                    std::cout << "\nAccount created successfully!" << std::endl;
+                    BankAccount::printAccount(*newAccount);
+                    accounts.push_back(std::move(newAccount));
+                } else {
+                    std::cout << "\nAccount creation failed." << std::endl;
+                }
                 break;
             }
             case 4: {
@@ -401,21 +288,36 @@ int main() {
                 }
                 break;
             }
-            case 11:
+            case 11: {
+                std::cout << "--------------------------------" << std::endl;
+                std::cout << "Enter account number: ";
+                std::cin >> userAccountNumber;
+
+                int accountIndex = findAccountIndex(accounts, userAccountNumber);
+                if (accountIndex >= 0) {
+                    // Call your new function!
+                    accounts[accountIndex]->printHistory();
+                } else {
+                    std::cout << "Account not found." << std::endl;
+                }
+                break;
+            }
+            case 12:
                 std::cout << "--------------------------------" << std::endl;
                 std::cout << "Thank you for using the Bank Account Management System!" << std::endl;
                 std::cout << "Exiting program..." << std::endl;
                 break;
             default:
-                std::cout << "Invalid choice. Please select 1-11." << std::endl;
+                std::cout << "Invalid choice. Please select 1-12." << std::endl;
                 break;
+
         }
 
         if (!std::cin) {
             std::cin.clear();
             std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
         }
-    } while (menuChoice != 11);
+    } while (menuChoice != 12);
 
     return 0;
 }
