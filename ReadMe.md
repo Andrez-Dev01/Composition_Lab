@@ -1,6 +1,6 @@
 # Bank Account Management System
 
-A C++ class for representing a book in a library system.
+C++ project on making a full BankAccount using Object Oriented Programming.
 
 ## Data Dictionary
 
